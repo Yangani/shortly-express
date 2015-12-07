@@ -13,7 +13,7 @@ var Link = require('../app/models/link');
 // Remove the 'x' from beforeEach block when working on
 // authentication tests.
 /************************************************************/
-var xbeforeEach = function(){};
+var beforeEach = function(){};
 /************************************************************/
 
 
@@ -63,7 +63,7 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    xbeforeEach(function(done){      // create a user that we can then log-in
+    beforeEach(function(done){      // create a user that we can then log-in
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
@@ -149,9 +149,16 @@ describe('', function() {
 
     }); // 'Shortening links'
 
-    describe('With previously saved urls:', function(){
+    xdescribe('With previously saved urls:', function(){
 
-      var link;
+      var link = new Link({
+        url: 'http://www.roflzoo.com/',
+        title: 'Rofl Zoo - Daily funny animal pictures',
+        base_url: 'http://127.0.0.1:4568'
+      });
+      link.save().then(function(){
+        done();
+      });
 
       beforeEach(function(done){
         // save a link to the database
@@ -212,7 +219,7 @@ describe('', function() {
 
   }); // 'Link creation'
 
-  xdescribe('Privileged Access:', function(){
+  describe('Privileged Access:', function(){
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
       request('http://127.0.0.1:4568/', function(error, res, body) {
@@ -237,7 +244,7 @@ describe('', function() {
 
   }); // 'Privileged Access'
 
-  xdescribe('Account Creation:', function(){
+  describe('Account Creation:', function(){
 
     it('Signup creates a user record', function(done) {
       var options = {

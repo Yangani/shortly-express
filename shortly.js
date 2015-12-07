@@ -1,7 +1,11 @@
 var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
+var session = require('express-session');
 var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser')
+// Maybe use this later.
+// var bcrypt = require('bcrypt');
 
 
 var db = require('./app/config');
@@ -22,25 +26,100 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+// http://www.9bitstudios.com/2013/09/express-js-authentication/
+app.use(cookieParser('shhhh, very secret'));
+app.use(session());
 
-app.get('/', 
+// http://www.9bitstudios.com/2013/09/express-js-authentication/
+function restrict(req, res, next) {
+  // console.log('req:', req);
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+}
+
+app.get('/', restrict,
+function(req, res) {
+
+// http://www.9bitstudios.com/2013/09/express-js-authentication/
+  res.render('index');
+});
+
+app.get('/login',
+function(req, res) {
+  res.status(200);
+  res.render('login');
+});
+
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
-function(req, res) {
-  res.render('index');
-});
-
-app.get('/links', 
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.get('/signup',
+function(req, res) {
+  res.status(200);
+  res.render('signup');
+});
+
+// http://www.9bitstudios.com/2013/09/express-js-authentication/
+app.post('/login',
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  console.log('Logging in:', username);
+  console.log('  username:', username);
+  console.log('  password:', password);
+
+  //1. Authenticate username
+  // Users.hasUser('me');
+  Users.authenticate(username, password);
+  db.knex('users').then(function(data) {console.log('one more time:', data)})
+
+
+  //2. ..Password
+
+  if(username == 'demo' && password == 'demo'){
+      req.session.regenerate(function(){
+      req.session.user = username;
+      res.redirect('/restricted');
+      });
+  }
+  else {
+     res.redirect('login');
+  }
+});
+
+app.post('/signup',
+function(req, res) {
+  // 1. Get the username and password.
+  var username = req.body.username;
+  var password = req.body.password;
+  console.log('Signing up:', username);
+  console.log('  username:', username);
+  console.log('  password:', password);
+
+  // 2. Save in the database.
+ new User(username, password);
+
+  // 3. Redirect to the login page.
+  req.session.regenerate(function(){
+    req.session.user = username;
+    res.redirect('/login');
+  });
+});
+
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
