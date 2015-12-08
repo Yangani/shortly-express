@@ -4,9 +4,9 @@ var partials = require('express-partials');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser')
+var uuid = require('node-uuid');
 // Maybe use this later.
 // var bcrypt = require('bcrypt');
-
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -30,10 +30,16 @@ app.use(express.static(__dirname + '/public'));
 app.use(cookieParser('shhhh, very secret'));
 app.use(session());
 
+var currentSessions = {};
+
+// var testId = '9bf083ac-975e-41be-ac18-3d3d2e4913f4';
+// currentSessions[testId] = true;
+
 // http://www.9bitstudios.com/2013/09/express-js-authentication/
 function restrict(req, res, next) {
   // console.log('req:', req);
-  if (req.session.user) {
+  if (currentSessions[req.session.sessionId]) {
+    // console.log('Already logged in :)');
     next();
   } else {
     req.session.error = 'Access denied!';
@@ -43,8 +49,6 @@ function restrict(req, res, next) {
 
 app.get('/', restrict,
 function(req, res) {
-
-// http://www.9bitstudios.com/2013/09/express-js-authentication/
   res.render('index');
 });
 
@@ -77,27 +81,31 @@ app.post('/login',
 function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
-  console.log('Logging in:', username);
-  console.log('  username:', username);
-  console.log('  password:', password);
+  // console.log('Logging in:', username);
+  // console.log('  password:', password);
 
-  //1. Authenticate username
-  // Users.hasUser('me');
-  Users.authenticate(username, password);
-  db.knex('users').then(function(data) {console.log('one more time:', data)})
-
-
-  //2. ..Password
-
-  if(username == 'demo' && password == 'demo'){
+  // 1. Authenticate username and password
+  // 2. Get sessionId.
+  new User().authenticate(username, password, function(correctPassword) {
+  // 3. Redirect to home page.
+    if (correctPassword) {
+      console.log("Good password:", password);
+      var sessionId = uuid.v4();
+      console.log('sessionId', sessionId);
+      currentSessions[sessionId] = true;
       req.session.regenerate(function(){
-      req.session.user = username;
-      res.redirect('/restricted');
+        req.session.user = username;
+        req.session.sessionId = sessionId;
+        res.redirect('/');
       });
-  }
-  else {
-     res.redirect('login');
-  }
+    } else {
+      console.log("Bad password:", password);
+      req.session.regenerate(function(){
+        req.session.user = username;
+        res.redirect('/login');
+      });
+    }
+  });
 });
 
 app.post('/signup',
@@ -105,17 +113,21 @@ function(req, res) {
   // 1. Get the username and password.
   var username = req.body.username;
   var password = req.body.password;
-  console.log('Signing up:', username);
-  console.log('  username:', username);
-  console.log('  password:', password);
+  // console.log('Signing up:', username);
+  // console.log('  password:', password);
 
   // 2. Save in the database.
- new User(username, password);
+  new User().save(username, password);
+
+  var sessionId = uuid.v4();
+  currentSessions[sessionId] = true;
 
   // 3. Redirect to the login page.
   req.session.regenerate(function(){
     req.session.user = username;
-    res.redirect('/login');
+    req.session.sessionId = sessionId;
+    // res.redirect('/login');
+    res.redirect('/');
   });
 });
 
