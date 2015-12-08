@@ -14,8 +14,6 @@ var User = db.Model.extend({
       .select('*')
       .where('username', '=', username)
       .then(function(data) {
-        console.log('data:', data)
-        // data: [ { username: 'ewre' } ]
         // If blank array, then return bad username.
         if (data.length === 0) {
           console.log("Bad username:", username);
@@ -29,13 +27,11 @@ var User = db.Model.extend({
 
           var correctPassword = (hash === savedPassword);
           fn(correctPassword);
-
         }
       });
   },
   save: function(username, password) {
     var hash = bcrypt.hashSync(password, salt);
-    console.log('hash:', hash);
 
     // INSERT INTO users (username, password)
     //   VALUES (username, password);
@@ -44,11 +40,8 @@ var User = db.Model.extend({
         'username': username,
         'password': hash
       }).then(function() {
-        console.log('Added user:', username);
+        // console.log('Added user:', username);
       });
-  },
-  initialize: function(){
-    //
   }
 });
 
