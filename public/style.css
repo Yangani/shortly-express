@@ -135,3 +135,42 @@ form input[type=text], form input[type=password] {
 .creator .message {
   clear: both;
 }
+
+#github-link {
+  height: 100%;
+  width: auto;
+  /*left: 0;*/
+  /*top: 0;*/
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+}
+
+#github-login {
+  background-color: #444444;
+  border-radius: 3px;
+  width: 15em;
+}
+
+#github-logo {
+  display: block;
+  float: left;
+  /*background: #444444;*/
+  background-image: url("http://cdn.flaticon.com/svg/25/25231.svg");
+  width: 1.5em;
+  height: 1.5em;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin: .5em;
+}
+
+#github-login p{
+  display: inline-block;
+  color: rgba(250,250,250,.87);
+  margin: 0;
+  padding: .75em;
+  /*text-indent: 1.5em;*/
+}

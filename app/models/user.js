@@ -2,8 +2,6 @@ var db = require('../config');
 var bcrypt = require('bcrypt-nodejs');
 var Promise = require('bluebird');
 
-var salt = bcrypt.genSaltSync(10);
-
 var User = db.Model.extend({
   tableName: 'users',
   hasTimestamps: true,
@@ -16,21 +14,18 @@ var User = db.Model.extend({
       .then(function(data) {
         // If blank array, then return bad username.
         if (data.length === 0) {
-          console.log("Bad username:", username);
           fn(false);
         } else {
-          console.log("Good username:", username);
           var user = data.pop();
           var savedPassword = user.password;
 
-          var hash = bcrypt.hashSync(password, salt);
-
-          var correctPassword = (hash === savedPassword);
+          var correctPassword = (bcrypt.compareSync(password, user.password));
           fn(correctPassword);
         }
       });
   },
   save: function(username, password) {
+    var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
 
     // INSERT INTO users (username, password)
